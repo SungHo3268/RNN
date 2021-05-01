@@ -60,17 +60,17 @@ class Attention(nn.Module):
 
     def forward(self, ht, hs):
         """
-        :param ht: (mini_batch, 1, lstm_dim)
+        :param ht: (mini_batch, seq_len, lstm_dim)
         :param hs: (mini_batch, max_seq_len, lstm_dim)
-        :return: align_vec = (mini_batch, 1, max_seq_len)
+        :return: align_vec = (mini_batch, seq_len, max_seq_len)
         """
         mini_batch, max_seq_len, lstm_dim = hs.shape
         score = 0
         if self.align == 'dot':
-            score = torch.bmm(ht, hs.transpose(2, 1))       # score = (mini_batch, 1, max_seq_len)
+            score = torch.bmm(ht, hs.transpose(2, 1))       # score = (mini_batch, seq_len, max_seq_len)
         elif self.align == 'general':
             score = self.att_score(hs)                      # score = (mini_batch, max_seq_len, lstm_dim)
-            score = torch.bmm(ht, score.transpose(2, 1))    # score = (mini_batch, 1, max_seq_len)
+            score = torch.bmm(ht, score.transpose(2, 1))    # score = (mini_batch, seq_len, max_seq_len)
         elif self.align == 'concat':
             ht = ht.tile(1, max_seq_len, 1)                 # ht = (mini_batch, max_seq_len, lstm_dim)
             cat = ht.cat(hs, dim=2)                         # cat = (mini_batch, max_seq_len, lstm_dim * 2)
@@ -118,12 +118,14 @@ class Decoder(nn.Module):
 
         self.embedding = nn.Embedding(src_vocab_size, embed_dim, padding_idx=0)
         self.dropout = nn.Dropout(dropout)
+
         if self.input_feed:
             self.lstm = nn.LSTM(embed_dim+lstm_dim, lstm_dim, lstm_layer, batch_first=True, dropout=dropout)
         else:
             self.lstm = nn.LSTM(embed_dim, lstm_dim, lstm_layer, batch_first=True, dropout=dropout)
         self.attention = Attention(align, lstm_dim, max_sen_len, input_feed)
         self.linear = nn.Linear(lstm_dim*2, lstm_dim, bias=False)
+
         if self.att_type == 'local':
             self.position = nn.Linear(lstm_dim, lstm_dim, bias=False)
             self.v_p = nn.Parameter(torch.FloatTensor(lstm_dim, 1))
@@ -131,7 +133,7 @@ class Decoder(nn.Module):
     def forward(self, x, prev_hht, hidden, encoder_outputs, src_len):
         """
         'att_len' is the range of source hidden states within the window
-        :param x: one time-step target_input word = (mini_batch, 1)      / first time-step input is SOS token
+        :param x: one time-step target_input word = (mini_batch, seq_len)
         :param prev_hht: the output vector of the past time step decoder = (mini_batch, 1, lstm_dim)
         :param hidden: (lstm_layer, mini_batch,lstm_dim)
         :param encoder_outputs: (mini_batch, max_sen_len, lstm_dim)

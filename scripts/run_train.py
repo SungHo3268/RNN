@@ -20,6 +20,7 @@ parser.add_argument('--align', type=str, default='general',
                     help='location  |  dot  |  general  |  concat')
 parser.add_argument('--input_feed', type=_bool, default=False)
 parser.add_argument('--reverse', type=_bool, default=True)
+parser.add_argument('--mini_batch', type=int, default=128)
 parser.add_argument('--max_epoch', type=int, default=12)
 parser.add_argument('--fine_tune_epoch', type=int, default=8)
 parser.add_argument('--eval_interval', type=int, default=50)
@@ -54,7 +55,6 @@ lstm_dim = 1000
 dropout = 0.2
 window_size = 10
 lr = 1.0
-mini_batch = 64
 max_norm = 5.0
 
 
@@ -81,10 +81,10 @@ with open('datasets/preprocessed/target.pkl', 'rb') as fr:
 print("Complete. \n")
 
 print("Split the data into mini_batch..")
-src_input = make_batch(src_input, mini_batch)
-src_len = make_batch(src_len, mini_batch)
-tgt_input = make_batch(tgt_input, mini_batch)
-tgt_output = make_batch(tgt_output, mini_batch)
+src_input = make_batch(src_input, args.mini_batch)
+src_len = make_batch(src_len, args.mini_batch)
+tgt_input = make_batch(tgt_input, args.mini_batch)
+tgt_output = make_batch(tgt_output, args.mini_batch)
 print("Complete.\n")
 
 
@@ -133,8 +133,8 @@ for epoch in range(args.max_epoch):
         sen_num += 1
 
         # init hidden state
-        h_0 = torch.zeros(lstm_layer, mini_batch, lstm_dim)  # (4, 128, 1000)
-        c_0 = torch.zeros(lstm_layer, mini_batch, lstm_dim)
+        h_0 = torch.zeros(lstm_layer, args.mini_batch, lstm_dim)  # (4, 128, 1000)
+        c_0 = torch.zeros(lstm_layer, args.mini_batch, lstm_dim)
         hidden = (h_0, c_0)
         hidden = [state.detach() for state in hidden]
         if args.gpu:
@@ -145,7 +145,7 @@ for epoch in range(args.max_epoch):
             hidden = [state.to(device) for state in hidden]
 
         # first decoder (past) output
-        hht = torch.zeros(mini_batch, 1, lstm_dim)         # first time-step prev decoder context
+        hht = torch.zeros(args.mini_batch, 1, lstm_dim)         # first time-step prev decoder context
         if args.gpu:
             hht = hht.to(device)
 
