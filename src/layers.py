@@ -164,7 +164,7 @@ class Decoder(nn.Module):
                 hhs = hhs.to(torch.device(f'cuda:{self.cuda}'))
             hhs = softmax_masking(hhs)                              # hhs = (mini_batch, max_sen_len(window), lstm_dim)
             align = self.attention(ht, hhs)                         # align = (mini_batch, seq_len, max_sen_len(window)
-            a_t = align * torch.exp(-pow((src_len.unsqeeze(1).tile(1, max_sen_len)-pt), 2) /
+            a_t = align * torch.exp(-pow((src_len.unsqueeze(1).tile(1, max_sen_len)-pt), 2) /
                                     (2*pow(self.window_size/2, 2))).unsqueeze(2).tile(1, 1, max_sen_len)
                                                                     # a_t = (mini_batch, seq_len, max_sen_len(window))
             ct = torch.bmm(a_t, hhs)                                # ct = (mini_batch, seq_len, lstm_dim)
