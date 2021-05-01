@@ -43,7 +43,6 @@ if not os.path.exists(tb_dir):
     os.mkdir(tb_dir)
 if not os.path.exists(ckpt_dir):
     os.mkdir(ckpt_dir)
-
 tb_writer = SummaryWriter(tb_dir)
 
 

@@ -1,6 +1,9 @@
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import sys
+import os
+sys.path.append(os.getcwd())
+from src.functions import *
 
 
 class Encoder(nn.Module):
@@ -61,27 +64,27 @@ class Attention(nn.Module):
     def forward(self, ht, hs):
         """
         :param ht: (mini_batch, seq_len, lstm_dim)
-        :param hs: (mini_batch, max_seq_len, lstm_dim)
-        :return: align_vec = (mini_batch, seq_len, max_seq_len)
+        :param hs: (mini_batch, max_sen_len(window), lstm_dim)
+        :return: align_vec = (mini_batch, seq_len, max_seq_len(window))
         """
-        mini_batch, max_seq_len, lstm_dim = hs.shape
+        mini_batch, max_sen_len, lstm_dim = hs.shape
         score = 0
         if self.align == 'dot':
-            score = torch.bmm(ht, hs.transpose(2, 1))       # score = (mini_batch, seq_len, max_seq_len)
+            score = torch.bmm(ht, hs.transpose(2, 1))       # score = (mini_batch, seq_len, max_sen_len(window))
         elif self.align == 'general':
-            score = self.att_score(hs)                      # score = (mini_batch, max_seq_len, lstm_dim)
-            score = torch.bmm(ht, score.transpose(2, 1))    # score = (mini_batch, seq_len, max_seq_len)
+            score = self.att_score(hs)                      # score = (mini_batch, max_sen_len(window), lstm_dim)
+            score = torch.bmm(ht, score.transpose(2, 1))    # score = (mini_batch, seq_len, max_sen_len(window))
         elif self.align == 'concat':
-            ht = ht.tile(1, max_seq_len, 1)                 # ht = (mini_batch, max_seq_len, lstm_dim)
-            cat = ht.cat(hs, dim=2)                         # cat = (mini_batch, max_seq_len, lstm_dim * 2)
-            score = self.att_score(cat)                     # score = (mini_batch, max_seq_len, lstm_dim)
+            ht = ht.tile(1, max_sen_len, 1)                 # ht = (mini_batch, max_sen_len(window), lstm_dim)
+            cat = ht.cat(hs, dim=2)                         # cat = (mini_batch, max_sen_len(window), lstm_dim * 2)
+            score = self.att_score(cat)                     # score = (mini_batch, max_sen_len(window), lstm_dim)
             score = torch.tanh(score)
-            score = torch.matmul(score, self.v)             # score = (mini_batch, max_seq_len, 1)
+            score = torch.matmul(score, self.v)             # score = (mini_batch, max_sen_len(window), seq_len)
         elif self.align == 'location':
-            score = self.att_score(ht)                      # score = (mini_batch, max_seq_len, 1)
+            score = self.att_score(ht)                      # score = (mini_batch, seq_len, max_sen_len(window))
         if self.input_feed:
-            score = score.view(mini_batch, 1, max_seq_len)      # score = (mini_batch, 1, max_seq_len)
-        align_vec = F.softmax(score, dim=2)                 # align_vec = (mini_batch, 1, max_seq_len)
+            score = score.view(mini_batch, 1, max_sen_len)  # score = (mini_batch, seq_len, max_sen_len)
+        align_vec = F.softmax(score, dim=2)                 # align_vec = (mini_batch, seq_len, max_sen_len)
         return align_vec
 
     def init_param(self):
@@ -133,41 +136,39 @@ class Decoder(nn.Module):
     def forward(self, x, prev_hht, hidden, encoder_outputs, src_len):
         """
         'att_len' is the range of source hidden states within the window
-        :param x: one time-step target_input word = (mini_batch, seq_len)
-        :param prev_hht: the output vector of the past time step decoder = (mini_batch, 1, lstm_dim)
-        :param hidden: (lstm_layer, mini_batch,lstm_dim)
+        :param x: (mini_batch, seq_len)
+        :param prev_hht: (mini_batch, seq_len, lstm_dim): the output vector of the past time step decoder
+        :param hidden: (lstm_layer, mini_batch, lstm_dim)
         :param encoder_outputs: (mini_batch, max_sen_len, lstm_dim)
-        :param src_len:
-        :return: hht = (mini_batch, 1, tgt_vocab_size)
-                hidden = (h, c) = ((lstm_layer, mini_batch, lstm_dim), (lstm_layer, mini_batch, lstm_dim))
+        :param src_len: (mini_batch, ): the source sentence length of encoder outputs
+        :return: hht = (mini_batch, seq_len, tgt_vocab_size)
+                 hidden = (h, c) = ((lstm_layer, mini_batch, lstm_dim), (lstm_layer, mini_batch, lstm_dim))
         """
         mini_batch, max_sen_len, lstm_dim = encoder_outputs.size()
-        x = self.embedding(x)                          # x = (mini_batch, 1, embed_dim)
+        x = self.embedding(x)                                       # x = (mini_batch, seq_len, embed_dim)
         x = self.dropout(x)
         if self.input_feed:
-            x = torch.cat((x, prev_hht), dim=2)                     # x = (mini_batch, 1, embed_dim+lstm_dim)
-            ht, hidden = self.lstm(x, hidden)
+            x = torch.cat((x, prev_hht), dim=2)                     # x = (mini_batch, seq_len, embed_dim+lstm_dim)
+            ht, hidden = self.lstm(x, hidden)                       # ht = (mini_batch, seq_len, lstm_dim)
         else:
-            ht, hidden = self.lstm(x, hidden)                           # ht = (mini_batch, 1, lstm_dim)
+            ht, hidden = self.lstm(x, hidden)                       # ht = (mini_batch, seq_len, lstm_dim)
+
         if self.att_type == 'global':
-            at = self.attention(ht, encoder_outputs)                    # at = (mini_batch, 1, att_len)
-            ct = torch.bmm(at, encoder_outputs)                         # ct = (mini_batch, 1, lstm_dim)
+            at = self.attention(ht, encoder_outputs)                # at = (mini_batch, seq_len, att_len)
+            ct = torch.bmm(at, encoder_outputs)                     # ct = (mini_batch, seq_len, lstm_dim)
         else:  # att_type == 'local'
             p_sig = torch.sigmoid_(torch.matmul(torch.tanh(self.position(ht)), self.v_p)).squeeze()
-            pt = src_len * p_sig.squeeze()                       # pt = (mini_batch, ) = p_sig
-            ct = torch.zeros(mini_batch, 1, lstm_dim)
-            if self.gpu:
-                ct = ct.to(torch.device(f'cuda:{self.cuda}'))
-            for i in range(mini_batch):
-                left = int(max(0, pt[i]-self.window_size))
-                right = int(min(src_len[i], pt[i]+self.window_size) + 1)    # index = real_position + 1
-                h_s = encoder_outputs[i, left:right]                        # h_s = (seq_len = [x < 2D+1], lstm_dim)
-                a_t = self.attention(ht[i].unsqueeze(0), h_s.unsqueeze(0)) * torch.exp_(
-                    -pow((src_len[i]-pt[i]), 2) / (2*pow(self.window_size/2, 2))
-                )
-                ct[i] = torch.matmul(a_t, h_s)          # ct[i]=(1, 1, lstm_dim),
-                                                        # a_t=(1, 1, seq_len), h_s=(seq_len, lstm_dim)
-        hht = torch.tanh(self.linear(torch.cat((ct, ht), dim=2)))       # hht = (mini_batch, 1, lstm_dim)
+            pt = src_len.unsqeeze(1) * p_sig.squeeze(2)             # pt = (mini_batch, seq_len) = p_sig.squeeze(2)
+            hhs = make_position_vec(pt, encoder_outputs, src_len, self.window_size)
+            if self.gpu:                                            # hhs = (mini_batch, max_sen_len(window), lstm_dim)
+                hhs = hhs.to(torch.device(f'cuda:{self.cuda}'))
+            hhs = softmax_masking(hhs)                              # hhs = (mini_batch, max_sen_len(window), lstm_dim)
+            align = self.attention(ht, hhs)                         # align = (mini_batch, seq_len, max_sen_len(window)
+            a_t = align * torch.exp(-pow((src_len.unsqeeze(1).tile(1, max_sen_len)-pt), 2) /
+                                    (2*pow(self.window_size/2, 2))).unsqueeze(2).tile(1, 1, max_sen_len)
+                                                                    # a_t = (mini_batch, seq_len, max_sen_len(window))
+            ct = torch.bmm(a_t, hhs)                                # ct = (mini_batch, seq_len, lstm_dim)
+        hht = torch.tanh(self.linear(torch.cat((ct, ht), dim=2)))   # hht = (mini_batch, seq_len, lstm_dim)
         return hht, hidden
 
     def init_param(self):

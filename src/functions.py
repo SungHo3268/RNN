@@ -1,5 +1,6 @@
 import numpy as np
 import pickle
+import torch
 from tqdm.auto import tqdm
 import os
 import sys
@@ -156,3 +157,20 @@ def make_batch(data, mini_batch):
     for i in range(batch_size):
         batch_data.append(data[i*mini_batch: (i+1)*mini_batch])
     return np.array(batch_data)
+
+
+def make_position_vec(pt, hs, src_len, window_size):
+    hhs = torch.zeros_like(hs)              # hhs = (mini_batch, max_sen_len, lstm_dim)
+    mini_batch, seq_len = pt.size()
+    for i in range(seq_len):
+        left = torch.max(torch.zeros(mini_batch), pt[:, i]-window_size).to(torch.int64)     # left = (mini_batch, )
+        right = torch.min(src_len-1, pt[:, i]+window_size).to(torch.int64)                  # right = (mini_batch, )
+        for j in range(mini_batch):
+            hhs[j, left[i]:right[i]+1] = hs[j, left[i]:right[i]+1]
+    return hhs
+
+
+def softmax_masking(data, neg_inf=-1e+04):
+    mask = (data == 0)
+    mask = mask.to(torch.int64) * neg_inf
+    return mask*data

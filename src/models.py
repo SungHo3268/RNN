@@ -21,11 +21,11 @@ class RnnNMT(nn.Module):
     def forward(self, src, tgt, hidden, hht, src_len):
         """
         :param src: (mini_batch, max_sen_len)
-        :param tgt: (mini_batch, max_sen_len)
-        :param hidden: (lstm_layer, mini_batch
-        :param hht:
-        :param src_len:
-        :return: (mini_batch, max_sen_len)
+        :param tgt: (mini_batch, seq_len)
+        :param hidden: (lstm_layer, mini_batch, lstm_dim)
+        :param hht: (mini_batch, seq_len, lstm_dim)
+        :param src_len: (mini_batch, )
+        :return: (mini_batch, seq_len, tgt_vocab_size)
         """
         mini_batch, max_sen_len = tgt.size()
         encoder_outputs, hidden = self.encoder(src, hidden)     # encoder_outputs=(mini_batch, max_sen_len, lstm_dim)
@@ -37,7 +37,7 @@ class RnnNMT(nn.Module):
                 output[:, i] = out.squeeze()
         else:
             hht, hidden = self.decoder(tgt, hht, hidden, encoder_outputs, src_len)
-            output = self.linear(hht)           # output = (mini_batch, max_sen_len, tgt_vocab_size)
+            output = self.linear(hht)           # output = (mini_batch, seq_len, tgt_vocab_size)
 
         return output
 
