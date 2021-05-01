@@ -159,11 +159,15 @@ def make_batch(data, mini_batch):
     return np.array(batch_data)
 
 
-def make_position_vec(pt, hs, src_len, window_size):
-    hhs = torch.zeros_like(hs)              # hhs = (mini_batch, max_sen_len, lstm_dim)
+def make_position_vec(pt, hs, src_len, window_size, gpu, cuda):           # hhs is zero tensor placeholder
     mini_batch, seq_len = pt.size()
+    hhs = torch.zeros_like(hs)                  # hhs = (mini_batch, max_sen_len(window), lstm_dim)
+    left_min = torch.zeros(mini_batch)
+    if gpu:                                # hhs = (mini_batch, max_sen_len(window), lstm_dim)
+        hhs = hhs.to(torch.device(f'cuda:{cuda}'))
+        left_min = left_min.to(torch.device(f'cuda:{cuda}'))
     for i in range(seq_len):
-        left = torch.max(torch.zeros(mini_batch), pt[:, i]-window_size).to(torch.int64)     # left = (mini_batch, )
+        left = torch.max(left_min, pt[:, i]-window_size).to(torch.int64)     # left = (mini_batch, )
         right = torch.min(src_len-1, pt[:, i]+window_size).to(torch.int64)                  # right = (mini_batch, )
         for j in range(mini_batch):
             hhs[j, left[i]:right[i]+1] = hs[j, left[i]:right[i]+1]

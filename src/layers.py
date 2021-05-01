@@ -157,11 +157,9 @@ class Decoder(nn.Module):
             at = self.attention(ht, encoder_outputs)                # at = (mini_batch, seq_len, att_len)
             ct = torch.bmm(at, encoder_outputs)                     # ct = (mini_batch, seq_len, lstm_dim)
         else:  # att_type == 'local'
-            p_sig = torch.sigmoid_(torch.matmul(torch.tanh(self.position(ht)), self.v_p)).squeeze()
-            pt = src_len.unsqueeze(1) * p_sig.squeeze(2)             # pt = (mini_batch, seq_len) = p_sig.squeeze(2)
-            hhs = make_position_vec(pt, encoder_outputs, src_len, self.window_size)
-            if self.gpu:                                            # hhs = (mini_batch, max_sen_len(window), lstm_dim)
-                hhs = hhs.to(torch.device(f'cuda:{self.cuda}'))
+            p_sig = torch.sigmoid(torch.matmul(torch.tanh(self.position(ht)), self.v_p)).squeeze(2)
+            pt = p_sig * src_len.unsqueeze(1)                       # pt = (mini_batch, seq_len) = p_sig
+            hhs = make_position_vec(pt, encoder_outputs, src_len, self.window_size, self.gpu, self.cuda)
             hhs = softmax_masking(hhs)                              # hhs = (mini_batch, max_sen_len(window), lstm_dim)
             align = self.attention(ht, hhs)                         # align = (mini_batch, seq_len, max_sen_len(window)
             a_t = align * torch.exp(-pow((src_len.unsqueeze(1).tile(1, max_sen_len)-pt), 2) /

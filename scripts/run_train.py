@@ -20,7 +20,7 @@ parser.add_argument('--align', type=str, default='general',
                     help='location  |  dot  |  general  |  concat')
 parser.add_argument('--input_feed', type=_bool, default=False)
 parser.add_argument('--reverse', type=_bool, default=True)
-parser.add_argument('--mini_batch', type=int, default=128)
+parser.add_argument('--mini_batch', type=int, default=64)
 parser.add_argument('--max_epoch', type=int, default=12)
 parser.add_argument('--fine_tune_epoch', type=int, default=8)
 parser.add_argument('--eval_interval', type=int, default=50)
