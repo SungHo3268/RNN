@@ -102,20 +102,26 @@ if args.gpu:
 np.random.seed(args.random_seed)
 torch.random.manual_seed(args.random_seed)
 
+src_input = torch.from_numpy(src_input)
+src_len = torch.from_numpy(src_len)
+tgt_input = torch.from_numpy(tgt_input)
+tgt_output = torch.from_numpy(tgt_output)
+
 
 ############################ Training start ############################
 sen_num = 0             # count the number of real train sentence pair.
 total_loss = 0
 count = 0
+
 for epoch in range(args.max_epoch):
     # shuffle the training data
     print("Shuffling the data..")
     per = torch.randperm(len(src_input))
-    src_input = torch.from_numpy(src_input[per])
-    src_len = torch.from_numpy(src_len[per])
-    tgt_input = torch.from_numpy(tgt_input[per])
-    tgt_output = torch.from_numpy(tgt_output[per])
-    print("Complete.\n")
+    src_input = src_input[per]
+    src_len = src_len[per]
+    tgt_input = tgt_input[per]
+    tgt_output = tgt_output[per]
+    print("Complete.")
 
     src_input = src_input.to(torch.int64)
     src_len = src_len.to(torch.int64)
@@ -169,8 +175,8 @@ for epoch in range(args.max_epoch):
             total_loss = 0
             count = 0
         tb_writer.flush()
-    torch.save(model.state_dict(), os.path.join(log_dir, 'log/ckpt/model.ckpt'))
-    torch.save(optimizer.state_dict(), os.path.join(log_dir, 'log/ckpt/optimizer.ckpt'))
-
+    torch.save(model.state_dict(), os.path.join(log_dir, 'ckpt/model.ckpt'))
+    torch.save(optimizer.state_dict(), os.path.join(log_dir, 'ckpt/optimizer.ckpt'))
+    print('\n')
     # test per a epoch
     model.eval()
