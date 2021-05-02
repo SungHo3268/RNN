@@ -68,6 +68,7 @@ max_norm = 5.0
 
 
 ############################ Load preprocessed data ############################
+print('\n')
 print("Load the preprocessed data..")
 with open('datasets/preprocessed/vocab.en.pkl', 'rb') as fr:
     en_to_id, id_to_en = pickle.load(fr)
@@ -195,9 +196,8 @@ for epoch in range(args.max_epoch):
             total_loss = 0
             count = 0
         tb_writer.flush()
+    print("Save the model..")
     torch.save(model.state_dict(), os.path.join(log_dir, 'ckpt/model.ckpt'))
     torch.save(optimizer.state_dict(), os.path.join(log_dir, 'ckpt/optimizer.ckpt'))
+    print("Complete..!")
     print('\n')
-
-    # test per a epoch
-    model.eval()

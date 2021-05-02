@@ -3,7 +3,6 @@ from distutils.util import strtobool as _bool
 import sys
 import os
 
-import torch
 
 sys.path.append(os.getcwd())
 from src.models import *
