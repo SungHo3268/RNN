@@ -29,8 +29,17 @@ parser.add_argument('--random_seed', type=int, default=515)
 parser.add_argument('--gpu', type=_bool, default=True)
 parser.add_argument('--cuda', type=int, default=0)
 args = parser.parse_args()
+if args.reverse:
+    if args.unk:
+        log_dir = f'log/{args.att_type}_{args.align}_reverse_unk'
+    else:
+        log_dir = f'log/{args.att_type}_{args.align}_reverse'
+else:
+    if args.unk:
+        log_dir = f'log/{args.att_type}_{args.align}_unk'
+    else:
+        log_dir = f'log/{args.att_type}_{args.align}'
 
-log_dir = f'log/{args.att_type}_{args.align}'
 if not os.path.exists(log_dir):
     os.mkdir(log_dir)
 with open(os.path.join(log_dir, 'args.json'), 'w') as f:
