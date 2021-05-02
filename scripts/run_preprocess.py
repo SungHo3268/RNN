@@ -33,14 +33,14 @@ with open('datasets/preprocessed/f_train.de.pkl', 'rb') as fr:
     f_train_de = pickle.load(fr)
 
 
-# source_input, source_len = make_source(f_train_en, en_to_id, max_sen_len=51, reverse=True, unk=True)
-# target_input, target_output = make_target(f_train_de, de_to_id, max_sen_len=51, unk=True)
-# with open('datasets/preprocessed/source_reverse_unk.pkl', 'wb') as fw:
-#     pickle.dump((source_input, source_len), fw)
-# with open('datasets/preprocessed/target_unk.pkl', 'wb') as fw:
-#     pickle.dump((target_input, target_output), fw)
+source_input, source_len = make_source(f_train_en, en_to_id, max_sen_len=51, reverse=True, unk=True)
+target_input, target_output = make_target(f_train_de, de_to_id, max_sen_len=51, unk=True)
+with open('datasets/preprocessed/source__reverse_unk.pkl', 'wb') as fw:
+    pickle.dump((source_input, source_len), fw)
+with open('datasets/preprocessed/target_unk.pkl', 'wb') as fw:
+    pickle.dump((target_input, target_output), fw)
 
-with open('datasets/preprocessed/source_reverse_unk.pkl', 'rb') as fr:
-    source_input, source_len = pickle.load(fr)
-with open('datasets/preprocessed/target_unk.pkl', 'rb') as fr:
-    target_input, target_output = pickle.load(fr)
+# with open('datasets/preprocessed/source_reverse_unk.pkl', 'rb') as fr:
+#     source_input, source_len = pickle.load(fr)
+# with open('datasets/preprocessed/target_unk.pkl', 'rb') as fr:
+#     target_input, target_output = pickle.load(fr)

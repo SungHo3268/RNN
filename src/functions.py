@@ -109,6 +109,7 @@ def make_source(data, word_to_id, max_sen_len, reverse=True, unk=True):
                     if unk:
                         word = '<unk>'
                     else:
+                        temp = [0] + temp
                         continue
                 temp.append(word_to_id[word])
             source.append(np.array(temp))
@@ -123,6 +124,7 @@ def make_source(data, word_to_id, max_sen_len, reverse=True, unk=True):
                     if unk:
                         word = '<unk>'
                     else:
+                        ll -= 1
                         continue
                 temp.append(word_to_id[word])
             temp += [0]*(max_sen_len - ll)
@@ -142,6 +144,7 @@ def make_target(data, word_to_id, max_sen_len, unk):
                 if unk:
                     word = '<unk>'
                 else:
+                    ll -= 1
                     continue
             temp.append(word_to_id[word])
         temp += [0]*(max_sen_len - ll)
@@ -156,6 +159,7 @@ def make_target(data, word_to_id, max_sen_len, unk):
                 if unk:
                     word = '<unk>'
                 else:
+                    ll -= 1
                     continue
             temp.append(word_to_id[word])
         temp += [0]*(max_sen_len - ll)
