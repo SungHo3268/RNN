@@ -129,7 +129,7 @@ class Decoder(nn.Module):
         self.attention = Attention(align, lstm_dim, max_sen_len, input_feed)
         self.linear = nn.Linear(lstm_dim*2, lstm_dim, bias=False)
 
-        if self.att_type == 'local':
+        if self.att_type == 'local_p':
             self.position = nn.Linear(lstm_dim, lstm_dim, bias=False)
             self.v_p = nn.Parameter(torch.FloatTensor(lstm_dim, 1))
 
@@ -155,7 +155,7 @@ class Decoder(nn.Module):
         if self.att_type == 'global':
             at = self.attention(ht, encoder_outputs)                # at = (mini_batch, seq_len, att_len)
             ct = torch.bmm(at, encoder_outputs)                     # ct = (mini_batch, seq_len, lstm_dim)
-        else:  # att_type == 'local'
+        else:  # att_type == 'local_p'
             p_sig = torch.sigmoid(torch.matmul(torch.tanh(self.position(ht)), self.v_p)).squeeze(2)
             pt = p_sig * src_len.unsqueeze(1)                       # pt = (mini_batch, seq_len) = p_sig
             hhs = make_position_vec(pt, encoder_outputs, src_len, self.window_size, self.gpu, self.cuda)
@@ -183,6 +183,6 @@ class Decoder(nn.Module):
         self.attention.init_param()
         # linear
         self.linear.weight.data.uniform_(-0.1, 0.1)
-        if self.att_type == 'local':
+        if self.att_type == 'local_p':
             self.position.weight.data.uniform_(-0.1, 0.1)
         return None
