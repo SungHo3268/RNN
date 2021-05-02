@@ -38,7 +38,6 @@ class RnnNMT(nn.Module):
         else:
             hht, hidden = self.decoder(tgt, hht, hidden, encoder_outputs, src_len)
             output = self.linear(hht)           # output = (mini_batch, seq_len, tgt_vocab_size)
-
         return output
 
     def init_param(self):

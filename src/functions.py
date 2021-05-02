@@ -174,7 +174,7 @@ def make_position_vec(pt, hs, src_len, window_size, gpu, cuda):           # hhs 
     return hhs
 
 
-def softmax_masking(data, neg_inf=-1e+04):
+def softmax_masking(data, neg_inf=-1e+06):
     mask = (data == 0)
     mask = mask.to(torch.int64) * neg_inf
     return mask*data

@@ -152,7 +152,6 @@ class Decoder(nn.Module):
             ht, hidden = self.lstm(x, hidden)                       # ht = (mini_batch, seq_len, lstm_dim)
         else:
             ht, hidden = self.lstm(x, hidden)                       # ht = (mini_batch, seq_len, lstm_dim)
-
         if self.att_type == 'global':
             at = self.attention(ht, encoder_outputs)                # at = (mini_batch, seq_len, att_len)
             ct = torch.bmm(at, encoder_outputs)                     # ct = (mini_batch, seq_len, lstm_dim)
