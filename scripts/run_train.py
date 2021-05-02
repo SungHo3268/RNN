@@ -20,6 +20,7 @@ parser.add_argument('--align', type=str, default='location',
                     help='location  |  dot  |  general  |  concat')
 parser.add_argument('--input_feed', type=_bool, default=False)
 parser.add_argument('--reverse', type=_bool, default=True)
+parser.add_argument('--unk', type=str, default=True)
 parser.add_argument('--mini_batch', type=int, default=64)
 parser.add_argument('--max_epoch', type=int, default=12)
 parser.add_argument('--fine_tune_epoch', type=int, default=8)
@@ -69,14 +70,24 @@ tgt_vocab_size = len(de_to_id)
 src_input = None
 tgt_input = None
 tgt_output = None
-if args.reverse:
-    with open('datasets/preprocessed/source_reverse.pkl', 'rb') as fr:
-        src_input, src_len = pickle.load(fr)
+if args.unk:
+    if args.reverse:
+        with open('datasets/preprocessed/source_reverse_unk.pkl', 'rb') as fr:
+            src_input, src_len = pickle.load(fr)
+    else:
+        with open('datasets/preprocessed/source_unk.pkl', 'rb') as fr:
+            src_input, src_len = pickle.load(fr)
+    with open('datasets/preprocessed/target_unk.pkl', 'rb') as fr:
+        tgt_input, tgt_output = pickle.load(fr)
 else:
-    with open('datasets/preprocessed/source.pkl', 'rb') as fr:
-        src_input, src_len = pickle.load(fr)
-with open('datasets/preprocessed/target.pkl', 'rb') as fr:
-    tgt_input, tgt_output = pickle.load(fr)
+    if args.reverse:
+        with open('datasets/preprocessed/source_reverse.pkl', 'rb') as fr:
+            src_input, src_len = pickle.load(fr)
+    else:
+        with open('datasets/preprocessed/source.pkl', 'rb') as fr:
+            src_input, src_len = pickle.load(fr)
+    with open('datasets/preprocessed/target.pkl', 'rb') as fr:
+        tgt_input, tgt_output = pickle.load(fr)
 print("Complete. \n")
 
 print("Split the data into mini_batch..")

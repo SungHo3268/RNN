@@ -96,7 +96,7 @@ def len_filter(data1, data2, max_sen_len=50):
     return fdata1, fdata2
 
 
-def make_source(data, word_to_id, max_sen_len, reverse=True):
+def make_source(data, word_to_id, max_sen_len, reverse=True, unk=True):
     source = []
     source_len = []
     if reverse:
@@ -106,7 +106,10 @@ def make_source(data, word_to_id, max_sen_len, reverse=True):
             temp = [0] * (max_sen_len - ll)
             for word in line[::-1]:
                 if word not in word_to_id:
-                    word = '<unk>'
+                    if unk:
+                        word = '<unk>'
+                    else:
+                        continue
                 temp.append(word_to_id[word])
             source.append(np.array(temp))
             source_len.append(ll)
@@ -117,7 +120,10 @@ def make_source(data, word_to_id, max_sen_len, reverse=True):
             temp = []
             for word in line:
                 if word not in word_to_id:
-                    word = '<unk>'
+                    if unk:
+                        word = '<unk>'
+                    else:
+                        continue
                 temp.append(word_to_id[word])
             temp += [0]*(max_sen_len - ll)
             source.append(np.array(temp))
@@ -125,7 +131,7 @@ def make_source(data, word_to_id, max_sen_len, reverse=True):
     return np.array(source), np.array(source_len)
 
 
-def make_target(data, word_to_id, max_sen_len):
+def make_target(data, word_to_id, max_sen_len, unk):
     target_input = []
     for line in tqdm(data, desc='making target input', bar_format='{l_bar}{bar:30}{r_bar}'):
         line = ['<s>'] + line.split()
@@ -133,7 +139,10 @@ def make_target(data, word_to_id, max_sen_len):
         temp = []
         for word in line:
             if word not in word_to_id:
-                word = '<unk>'
+                if unk:
+                    word = '<unk>'
+                else:
+                    continue
             temp.append(word_to_id[word])
         temp += [0]*(max_sen_len - ll)
         target_input.append(np.array(temp))
@@ -144,7 +153,10 @@ def make_target(data, word_to_id, max_sen_len):
         temp = []
         for word in line:
             if word not in word_to_id:
-                word = '<unk>'
+                if unk:
+                    word = '<unk>'
+                else:
+                    continue
             temp.append(word_to_id[word])
         temp += [0]*(max_sen_len - ll)
         target_output.append(np.array(temp))
