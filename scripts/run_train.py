@@ -170,7 +170,7 @@ for epoch in range(args.max_epoch):
             hidden = [state.to(device) for state in hidden]
 
         # first decoder (past) output
-        hht = torch.zeros(args.mini_batch, 1, lstm_dim)         # first time-step prev decoder context
+        hht = torch.zeros(args.mini_batch, max_sen_len, lstm_dim)         # first time-step prev decoder context
         if args.gpu:
             hht = hht.to(device)
 
@@ -198,5 +198,6 @@ for epoch in range(args.max_epoch):
     torch.save(model.state_dict(), os.path.join(log_dir, 'ckpt/model.ckpt'))
     torch.save(optimizer.state_dict(), os.path.join(log_dir, 'ckpt/optimizer.ckpt'))
     print('\n')
+
     # test per a epoch
     model.eval()

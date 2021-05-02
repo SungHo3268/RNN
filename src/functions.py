@@ -103,13 +103,13 @@ def make_source(data, word_to_id, max_sen_len, reverse=True, unk=True):
         for line in tqdm(data, desc='making source input', bar_format='{l_bar}{bar:30}{r_bar}'):
             line = line.split() + ['</s>']
             ll = len(line)
-            temp = [0] * (max_sen_len - ll)
+            temp = [2] * (max_sen_len - ll)
             for word in line[::-1]:
                 if word not in word_to_id:
                     if unk:
                         word = '<unk>'
                     else:
-                        temp = [0] + temp
+                        temp = [2] + temp
                         continue
                 temp.append(word_to_id[word])
             source.append(np.array(temp))
@@ -127,7 +127,7 @@ def make_source(data, word_to_id, max_sen_len, reverse=True, unk=True):
                         ll -= 1
                         continue
                 temp.append(word_to_id[word])
-            temp += [0]*(max_sen_len - ll)
+            temp += [2]*(max_sen_len - ll)
             source.append(np.array(temp))
             source_len.append(ll)
     return np.array(source), np.array(source_len)
@@ -147,7 +147,7 @@ def make_target(data, word_to_id, max_sen_len, unk):
                     ll -= 1
                     continue
             temp.append(word_to_id[word])
-        temp += [0]*(max_sen_len - ll)
+        temp += [2]*(max_sen_len - ll)
         target_input.append(np.array(temp))
     target_output = []
     for line in tqdm(data, desc='making target output', bar_format='{l_bar}{bar:30}{r_bar}'):
@@ -162,7 +162,7 @@ def make_target(data, word_to_id, max_sen_len, unk):
                     ll -= 1
                     continue
             temp.append(word_to_id[word])
-        temp += [0]*(max_sen_len - ll)
+        temp += [2]*(max_sen_len - ll)
         target_output.append(np.array(temp))
     return np.array(target_input), np.array(target_output)
 
