@@ -190,8 +190,8 @@ for epoch in range(args.max_epoch):
 
         if (args.eval_interval is not None) and ((sen_num % args.eval_interval) == 1):
             avg_loss = total_loss/count
-            tb_writer.add_scalar('loss/sentences', avg_loss, sen_num)
-            tb_writer.add_scalar('lr/epoch', lr, sen_num)
+            tb_writer.add_scalar('loss/(sentences * mini_batch)', avg_loss, sen_num)
+            tb_writer.add_scalar('lr/epoch', lr, epoch+1)
 
             total_loss = 0
             count = 0
