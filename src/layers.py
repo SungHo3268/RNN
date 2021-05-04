@@ -129,7 +129,7 @@ class Decoder(nn.Module):
         self.attention = Attention(align, lstm_dim, max_sen_len, input_feed)
         self.linear = nn.Linear(lstm_dim*2, lstm_dim, bias=False)
 
-        if self.att_type == 'local_p':
+        if self.att_type == 'local_p' or att_type == 'local_m':
             self.position = nn.Linear(lstm_dim, lstm_dim, bias=False)
             self.v_p = nn.Parameter(torch.FloatTensor(lstm_dim, 1))
 
@@ -145,6 +145,7 @@ class Decoder(nn.Module):
                  hidden = (h, c) = ((lstm_layer, mini_batch, lstm_dim), (lstm_layer, mini_batch, lstm_dim))
         """
         mini_batch, max_sen_len, lstm_dim = encoder_outputs.size()
+        seq_len = x.shape[1]
         x = self.embedding(x)                                       # x = (mini_batch, seq_len, embed_dim)
         x = self.dropout(x)
         if self.input_feed:
@@ -152,10 +153,12 @@ class Decoder(nn.Module):
             ht, hidden = self.lstm(x, hidden)                       # ht = (mini_batch, seq_len, lstm_dim)
         else:
             ht, hidden = self.lstm(x, hidden)                       # ht = (mini_batch, seq_len, lstm_dim)
+
+        ct = None
         if self.att_type == 'global':
             at = self.attention(ht, encoder_outputs)                # at = (mini_batch, seq_len, att_len)
             ct = torch.bmm(at, encoder_outputs)                     # ct = (mini_batch, seq_len, lstm_dim)
-        else:  # att_type == 'local_p'
+        elif self.att_type == 'local_p':
             p_sig = torch.sigmoid(torch.matmul(torch.tanh(self.position(ht)), self.v_p)).squeeze(2)
             pt = p_sig * src_len.unsqueeze(1)                       # pt = (mini_batch, seq_len) = p_sig
             hhs = make_position_vec(pt, encoder_outputs, src_len, self.window_size, self.gpu, self.cuda)
@@ -163,9 +166,18 @@ class Decoder(nn.Module):
             align = self.attention(ht, hhs)                         # align = (mini_batch, seq_len, max_sen_len(window)
             a_t = align * torch.exp(-pow((src_len.unsqueeze(1).tile(1, max_sen_len)-pt), 2) /
                                     (2*pow(self.window_size/2, 2))).unsqueeze(2).tile(1, 1, max_sen_len)
-                                                                    # a_t = (mini_batch, seq_len, max_sen_len(window))
             ct = torch.bmm(a_t, hhs)                                # ct = (mini_batch, seq_len, lstm_dim)
-        hht = torch.tanh(self.linear(torch.cat((ct, ht), dim=2)))   # hht = (mini_batch, seq_len, lstm_dim)
+        elif self.att_type == 'local_m':
+            hhs = position_masking(encoder_outputs, ht, self.window_size)  #(mini_batch, seq_len, max_sen_len, lstm_dim)
+            hhs = softmax_masking(hhs)
+            ct = torch.zeros(mini_batch, seq_len, lstm_dim)              # ct = (mini_batch, seq_len, lstm_dim)
+            if self.gpu:
+                hhs = hhs.to(self.cuda)
+                ct = ct.to(self.cuda)
+            for i in range(seq_len):
+                a_t = self.attention(ht[:, i].unsqueeze(1), hhs[:, i])      # (mini_batch, 1, max_sen_len)
+                ct[:, i] = torch.bmm(a_t, hhs[:, i]).squeeze()              # (mini_batch, 1, lstm_dim)
+        hht = torch.tanh(self.linear(torch.cat((ct, ht), dim=2)))           # hht = (mini_batch, seq_len, lstm_dim)
         return hht, hidden
 
     def init_param(self):
@@ -181,8 +193,9 @@ class Decoder(nn.Module):
                     weight.data.fill_(0)  # bias
         # attention
         self.attention.init_param()
+
         # linear
         self.linear.weight.data.uniform_(-0.1, 0.1)
-        if self.att_type == 'local_p':
+        if self.att_type == 'local_p' or self.att_type == 'local_m':
             self.position.weight.data.uniform_(-0.1, 0.1)
         return None

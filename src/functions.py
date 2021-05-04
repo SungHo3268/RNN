@@ -194,3 +194,14 @@ def softmax_masking(data, neg_inf=-1e+06):
     mask = (data == 0)
     mask = mask.to(torch.int64) * neg_inf
     return mask*data
+
+
+def position_masking(hs, ht, window_size):
+    mini_batch, max_sen_len, lstm_dim = hs.size()
+    seq_len = ht.shape[1]
+    hhs = torch.zeros(mini_batch, seq_len, max_sen_len, lstm_dim)
+    for i in range(seq_len):
+        left = max(0, i - window_size)
+        right = min(max_sen_len, i+window_size+1)
+        hhs[:, i, left:right] = hs[:, left:right]
+    return hhs

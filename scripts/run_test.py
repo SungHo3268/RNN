@@ -2,8 +2,6 @@ import argparse
 from distutils.util import strtobool as _bool
 import sys
 import os
-
-
 sys.path.append(os.getcwd())
 from src.models import *
 from src.functions import *
@@ -18,10 +16,8 @@ parser.add_argument('--align', type=str, default='location',
                     help='location  |  dot  |  general  |  concat')
 parser.add_argument('--input_feed', type=_bool, default=False)
 parser.add_argument('--reverse', type=_bool, default=True)
-parser.add_argument('--unk', type=str, default=True)
-parser.add_argument('--mini_batch', type=int, default=128)
-parser.add_argument('--max_epoch', type=int, default=12)
-parser.add_argument('--fine_tune_epoch', type=int, default=8)
+parser.add_argument('--unk', type=str, default=False)
+parser.add_argument('--mini_batch', type=int, default=64)
 parser.add_argument('--eval_interval', type=int, default=50)
 parser.add_argument('--random_seed', type=int, default=515)
 parser.add_argument('--gpu', type=_bool, default=True)
