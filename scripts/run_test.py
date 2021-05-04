@@ -19,7 +19,7 @@ parser.add_argument('--align', type=str, default='location',
 parser.add_argument('--input_feed', type=_bool, default=False)
 parser.add_argument('--reverse', type=_bool, default=True)
 parser.add_argument('--unk', type=str, default=True)
-parser.add_argument('--mini_batch', type=int, default=64)
+parser.add_argument('--mini_batch', type=int, default=128)
 parser.add_argument('--max_epoch', type=int, default=12)
 parser.add_argument('--fine_tune_epoch', type=int, default=8)
 parser.add_argument('--eval_interval', type=int, default=50)
@@ -127,16 +127,28 @@ for batch_src_input, batch_src_len in tqdm(zip(test_src_input, test_src_len), to
     output[cur] = tgt[:, 1:]            # output[cur] = (mini_batch, seq_len)
     cur += 1
 
+
 # make prediction.txt
 output = output.view(-1, max_sen_len)
 test_pred_output = []
 for line in output:
     sentence = ' '.join([id_to_de[int(idx)] for idx in line])
+    sentence = sentence.replace('</s>', '').strip() + ' \n'
     test_pred_output.append(sentence)
-
 # make label.txt
 test_tgt_output = test_tgt_output.view(-1, max_sen_len)
 test_label = []
 for line in test_tgt_output:
     sentence = ' '.join([id_to_de[int(idx)] for idx in line])
+    sentence = sentence.replace('</s>', '').strip() + ' \n'
     test_label.append(sentence)
+
+
+# save the prediction and label text.
+test_dir = os.path.join(log_dir, 'test')
+if not os.path.exists(test_dir):
+    os.mkdir(test_dir)
+with open(os.path.join(test_dir, 'output.txt'), 'w', encoding='utf8') as fw:
+    fw.writelines(test_pred_output)
+with open(os.path.join(test_dir, 'label.txt'), 'w', encoding='utf8') as fw:
+    fw.writelines(test_label)
