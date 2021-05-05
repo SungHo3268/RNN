@@ -16,7 +16,7 @@ class Encoder(nn.Module):
         :param dropout: dropout ratio
         """
         super(Encoder, self).__init__()
-        self.embedding = nn.Embedding(src_vocab_size, embed_dim, padding_idx=0)
+        self.embedding = nn.Embedding(src_vocab_size, embed_dim)
         self.dropout = nn.Dropout(dropout)
         self.lstm = nn.LSTM(embed_dim, lstm_dim, lstm_layer, batch_first=True, dropout=dropout)
 
@@ -119,7 +119,7 @@ class Decoder(nn.Module):
         self.gpu = gpu
         self.cuda = cuda
 
-        self.embedding = nn.Embedding(src_vocab_size, embed_dim, padding_idx=0)
+        self.embedding = nn.Embedding(src_vocab_size, embed_dim)
         self.dropout = nn.Dropout(dropout)
 
         if self.input_feed:
