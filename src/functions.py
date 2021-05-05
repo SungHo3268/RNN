@@ -85,7 +85,7 @@ def len_filter(data1, data2, max_sen_len=50):
     idx1.update(idx2)
     fdata1 = []
     fdata2 = []
-    for i in tqdm(range(len(data1)), desc='filtering...',
+    for i in tqdm(range(len(data1)), desc='filtering1...',
                   bar_format='{l_bar}{bar:30}{r_bar}'):
         if i not in idx1:
             line1 = clean_line(data1[i])
@@ -94,6 +94,19 @@ def len_filter(data1, data2, max_sen_len=50):
             fdata2.append(line2)
     print(f"After filtering, the number of sentence pair is {len(fdata1)}.")
     return fdata1, fdata2
+
+
+def dif_filter(data1, data2, dif=10):
+    ffdata1 = []
+    ffdata2 = []
+    for i in tqdm(range(len(data1)), desc='filtering2...', bar_format='{l_bar}{bar:30}{r_bar}'):
+        line1 = data1[i].split()
+        line2 = data2[i].split()
+        dif_len = abs(len(line1) - len(line2))
+        if dif_len < dif:
+            ffdata1.append(data1[i])
+            ffdata2.append(data2[i])
+    return ffdata1, ffdata2
 
 
 def make_source(data, word_to_id, max_sen_len, reverse=True, unk=True):
