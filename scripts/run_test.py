@@ -16,14 +16,13 @@ parser.add_argument('--align', type=str, default='location',
                     help='location  |  dot  |  general  |  concat')
 parser.add_argument('--input_feed', type=_bool, default=False)
 parser.add_argument('--reverse', type=_bool, default=True)
-parser.add_argument('--unk', type=str, default=True)
+parser.add_argument('--unk', type=_bool, default=False)
 parser.add_argument('--mini_batch', type=int, default=64)
-parser.add_argument('--eval_interval', type=int, default=50)
+parser.add_argument('--trunc', type=int, default=0)
 parser.add_argument('--random_seed', type=int, default=515)
 parser.add_argument('--gpu', type=_bool, default=True)
 parser.add_argument('--cuda', type=int, default=0)
 args = parser.parse_args()
-
 
 if args.reverse:
     if args.unk:
@@ -57,10 +56,29 @@ tgt_vocab_size = len(de_to_id)
 
 ############################ Load test data ############################
 print("Load the preprocessed test data..")
-with open('datasets/preprocessed/test_source_reverse_unk.pkl', 'rb') as fr:
-    test_source_input, test_source_len = pickle.load(fr)
-with open('datasets/preprocessed/test_label_unk.pkl', 'rb') as fr:
-    test_target_output = pickle.load(fr)
+test_source_input = None
+test_source_len = None
+test_target_output = None
+if args.unk:
+    if args.reverse:
+        with open(f'datasets/preprocessed/test/test{args.trunc}_source_reverse_unk.pkl', 'rb') as fr:
+            test_source_input, test_source_len = pickle.load(fr)
+    else:
+        with open(f'datasets/preprocessed/test/test{args.trunc}_source_unk.pkl', 'rb') as fr:
+            test_source_input, test_source_len = pickle.load(fr)
+    with open(f'datasets/preprocessed/test/test{args.trunc}_label_unk.pkl', 'rb') as fr:
+        test_target_output = pickle.load(fr)
+else:
+    if args.reverse:
+        with open(f'datasets/preprocessed/test/test{args.trunc}_source_reverse.pkl', 'rb') as fr:
+            test_source_input, test_source_len = pickle.load(fr)
+    else:
+        with open(f'datasets/preprocessed/test/test{args.trunc}_source.pkl', 'rb') as fr:
+            test_source_input, test_source_len = pickle.load(fr)
+    with open(f'datasets/preprocessed/test/test{args.trunc}_label.pkl', 'rb') as fr:
+        test_target_output = pickle.load(fr)
+print("Complete. \n")
+
 
 print("Split the data into mini_batch..")
 test_src_input = make_batch(test_source_input, args.mini_batch)
@@ -93,7 +111,8 @@ torch.random.manual_seed(args.random_seed)
 
 ############################ Test ############################
 cur = 0
-output = torch.zeros_like(test_src_input)           # output = (44, 64, 51)
+output = torch.zeros_like(test_src_input)           # output = (40, 64, 51)
+
 for batch_src_input, batch_src_len in tqdm(zip(test_src_input, test_src_len), total=len(test_src_input),
                                            bar_format='{l_bar}{bar:30}{r_bar}'):
     # init hidden state

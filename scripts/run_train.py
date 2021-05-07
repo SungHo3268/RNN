@@ -20,11 +20,12 @@ parser.add_argument('--align', type=str, default='location',
                     help='location  |  dot  |  general  |  concat')
 parser.add_argument('--input_feed', type=_bool, default=False)
 parser.add_argument('--reverse', type=_bool, default=True)
-parser.add_argument('--unk', type=str, default=False)
+parser.add_argument('--unk', type=_bool, default=False)
 parser.add_argument('--mini_batch', type=int, default=64)
 parser.add_argument('--max_epoch', type=int, default=12)
 parser.add_argument('--fine_tune_epoch', type=int, default=8)
 parser.add_argument('--eval_interval', type=int, default=50)
+parser.add_argument('--trunc', type=int, default=0)
 parser.add_argument('--random_seed', type=int, default=515)
 parser.add_argument('--gpu', type=_bool, default=True)
 parser.add_argument('--cuda', type=int, default=0)
@@ -82,21 +83,21 @@ tgt_input = None
 tgt_output = None
 if args.unk:
     if args.reverse:
-        with open('datasets/preprocessed/source_reverse_unk.pkl', 'rb') as fr:
+        with open('datasets/preprocessed/train/source_reverse_unk.pkl', 'rb') as fr:
             src_input, src_len = pickle.load(fr)
     else:
-        with open('datasets/preprocessed/source_unk.pkl', 'rb') as fr:
+        with open('datasets/preprocessed/train/source_unk.pkl', 'rb') as fr:
             src_input, src_len = pickle.load(fr)
-    with open('datasets/preprocessed/target_unk.pkl', 'rb') as fr:
+    with open('datasets/preprocessed/train/target_unk.pkl', 'rb') as fr:
         tgt_input, tgt_output = pickle.load(fr)
 else:
     if args.reverse:
-        with open('datasets/preprocessed/source_reverse.pkl', 'rb') as fr:
+        with open('datasets/preprocessed/train/source_reverse.pkl', 'rb') as fr:
             src_input, src_len = pickle.load(fr)
     else:
-        with open('datasets/preprocessed/source.pkl', 'rb') as fr:
+        with open('datasets/preprocessed/train/source.pkl', 'rb') as fr:
             src_input, src_len = pickle.load(fr)
-    with open('datasets/preprocessed/target.pkl', 'rb') as fr:
+    with open('datasets/preprocessed/train/target.pkl', 'rb') as fr:
         tgt_input, tgt_output = pickle.load(fr)
 print("Complete. \n")
 
@@ -112,8 +113,15 @@ print("Complete.\n")
 model = RnnNMT(src_vocab_size, tgt_vocab_size, embed_dim, lstm_dim, lstm_layer, dropout,
                args.align, args.att_type, max_sen_len, args.input_feed, window_size, args.gpu, args.cuda)
 model.init_param()
+
 criterion = nn.CrossEntropyLoss(ignore_index=0)
 optimizer = optim.SGD(model.parameters(), lr=lr)
+
+'''
+# If you want to continue the training...
+model.load_state_dict(torch.load(os.path.join(log_dir, 'ckpt/model.ckpt'), map_location='cuda:0'))
+optimizer.load_state_dict(torch.load(os.path.join(log_dir, 'ckpt/optimizer.ckpt'), map_location='cuda:0'))
+'''
 
 device = None
 if args.gpu:
@@ -155,6 +163,10 @@ for epoch in range(args.max_epoch):
     for batch_src_input, batch_src_len, batch_tgt_input, batch_tgt_output \
             in tqdm(zip(src_input, src_len, tgt_input, tgt_output), total=len(src_input),
                     desc=f'epoch {epoch+1}/{args.max_epoch}', bar_format='{l_bar}{bar:30}{r_bar}'):
+        '''if (epoch+1) < 12:
+            sen_num += len(src_input)
+            break'''
+
         model.train()
         sen_num += 1
 
@@ -196,8 +208,14 @@ for epoch in range(args.max_epoch):
             total_loss = 0
             count = 0
         tb_writer.flush()
+    '''if (epoch + 1) < 12:
+        continue'''
     print("Save the model..")
     torch.save(model.state_dict(), os.path.join(log_dir, 'ckpt/model.ckpt'))
     torch.save(optimizer.state_dict(), os.path.join(log_dir, 'ckpt/optimizer.ckpt'))
     print("Complete..!")
     print('\n')
+
+    # evaluate test set and save the text file.
+    test_eval(model, log_dir, args.mini_batch, lstm_layer, lstm_dim, max_sen_len,
+              args.gpu, args.cuda, args.reverse, args.unk, args.trunc, epoch, id_to_de)
