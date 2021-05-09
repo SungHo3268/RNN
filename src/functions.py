@@ -203,6 +203,15 @@ def make_position_vec(pt, hs, src_len, window_size, gpu, cuda):           # hhs 
     return hhs
 
 
+def make_att_mask(max_sen_len, window_size):
+    mask = torch.zeros(max_sen_len, max_sen_len)
+    for i in range(max_sen_len):
+        left = max(0, i-window_size)
+        right = min(max_sen_len, i+window_size+1)
+        mask[i, left:right] = torch.ones(right-left)
+    return mask
+
+
 def softmax_masking(data, neg_inf=-1e+06):
     mask = (data == 0)
     mask = mask.to(torch.int64) * neg_inf

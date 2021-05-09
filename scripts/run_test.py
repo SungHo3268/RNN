@@ -17,7 +17,7 @@ parser.add_argument('--align', type=str, default='location',
 parser.add_argument('--input_feed', type=_bool, default=False)
 parser.add_argument('--reverse', type=_bool, default=True)
 parser.add_argument('--unk', type=_bool, default=False)
-parser.add_argument('--mini_batch', type=int, default=64)
+parser.add_argument('--mini_batch', type=int, default=32)
 parser.add_argument('--trunc', type=int, default=0)
 parser.add_argument('--random_seed', type=int, default=515)
 parser.add_argument('--gpu', type=_bool, default=True)

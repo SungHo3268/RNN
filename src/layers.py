@@ -46,9 +46,10 @@ class Encoder(nn.Module):
 
 
 class Attention(nn.Module):
-    def __init__(self, align, lstm_dim, max_sen_len, input_feed):
+    def __init__(self, align, att_type, lstm_dim, max_sen_len, window_size, input_feed, gpu, cuda):
         super(Attention,  self).__init__()
         self.align = align
+        self.att_type = att_type
         self.input_feed = input_feed
 
         if align == 'general' or align == 'concat':
@@ -60,6 +61,11 @@ class Attention(nn.Module):
             self.att_score = nn.Linear(lstm_dim, max_sen_len, bias=False)
         else:
             print("It's the wrong alignment method.")
+
+        if att_type == 'local_m':
+            self.mask = make_att_mask(max_sen_len, window_size)
+            if gpu:
+                self.mask = self.mask.to(torch.device(f'cuda:{cuda}'))
 
     def forward(self, ht, hs):
         """
@@ -82,8 +88,14 @@ class Attention(nn.Module):
             score = torch.matmul(score, self.v)             # score = (mini_batch, max_sen_len(window), seq_len)
         elif self.align == 'location':
             score = self.att_score(ht)                      # score = (mini_batch, seq_len, max_sen_len(window))
+
         if self.input_feed:
             score = score.view(mini_batch, 1, max_sen_len)  # score = (mini_batch, seq_len, max_sen_len)
+
+        if self.att_type == 'local_m':
+            score *= self.mask
+            score = softmax_masking(score)
+
         align_vec = F.softmax(score, dim=2)                 # align_vec = (mini_batch, seq_len, max_sen_len)
         return align_vec
 
@@ -126,10 +138,10 @@ class Decoder(nn.Module):
             self.lstm = nn.LSTM(embed_dim+lstm_dim, lstm_dim, lstm_layer, batch_first=True, dropout=dropout)
         else:
             self.lstm = nn.LSTM(embed_dim, lstm_dim, lstm_layer, batch_first=True, dropout=dropout)
-        self.attention = Attention(align, lstm_dim, max_sen_len, input_feed)
+        self.attention = Attention(align, att_type, lstm_dim, max_sen_len, window_size, input_feed, gpu, cuda)
         self.linear = nn.Linear(lstm_dim*2, lstm_dim, bias=False)
 
-        if self.att_type == 'local_p' or att_type == 'local_m':
+        if self.att_type == 'local_p':
             self.position = nn.Linear(lstm_dim, lstm_dim, bias=False)
             self.v_p = nn.Parameter(torch.FloatTensor(lstm_dim, 1))
 
@@ -145,7 +157,6 @@ class Decoder(nn.Module):
                  hidden = (h, c) = ((lstm_layer, mini_batch, lstm_dim), (lstm_layer, mini_batch, lstm_dim))
         """
         mini_batch, max_sen_len, lstm_dim = encoder_outputs.size()
-        seq_len = x.shape[1]
         x = self.embedding(x)                                       # x = (mini_batch, seq_len, embed_dim)
         x = self.dropout(x)
         if self.input_feed:
@@ -153,10 +164,9 @@ class Decoder(nn.Module):
             ht, hidden = self.lstm(x, hidden)                       # ht = (mini_batch, seq_len, lstm_dim)
         else:
             ht, hidden = self.lstm(x, hidden)                       # ht = (mini_batch, seq_len, lstm_dim)
-
         ct = None
-        if self.att_type == 'global':
-            at = self.attention(ht, encoder_outputs)                # at = (mini_batch, seq_len, att_len)
+        if self.att_type == 'global' or 'local_m':
+            at = self.attention(ht, encoder_outputs)                # at = (mini_batch, seq_len, max_sen_len)
             ct = torch.bmm(at, encoder_outputs)                     # ct = (mini_batch, seq_len, lstm_dim)
         elif self.att_type == 'local_p':
             p_sig = torch.sigmoid(torch.matmul(torch.tanh(self.position(ht)), self.v_p)).squeeze(2)
@@ -167,16 +177,6 @@ class Decoder(nn.Module):
             a_t = align * torch.exp(-pow((src_len.unsqueeze(1).tile(1, max_sen_len)-pt), 2) /
                                     (2*pow(self.window_size/2, 2))).unsqueeze(2).tile(1, 1, max_sen_len)
             ct = torch.bmm(a_t, hhs)                                # ct = (mini_batch, seq_len, lstm_dim)
-        elif self.att_type == 'local_m':
-            hhs = position_masking(encoder_outputs, ht, self.window_size)  #(mini_batch, seq_len, max_sen_len, lstm_dim)
-            hhs = softmax_masking(hhs)
-            ct = torch.zeros(mini_batch, seq_len, lstm_dim)              # ct = (mini_batch, seq_len, lstm_dim)
-            if self.gpu:
-                hhs = hhs.to(self.cuda)
-                ct = ct.to(self.cuda)
-            for i in range(seq_len):
-                a_t = self.attention(ht[:, i].unsqueeze(1), hhs[:, i])      # (mini_batch, 1, max_sen_len)
-                ct[:, i] = torch.bmm(a_t, hhs[:, i]).squeeze()              # (mini_batch, 1, lstm_dim)
         hht = torch.tanh(self.linear(torch.cat((ct, ht), dim=2)))           # hht = (mini_batch, seq_len, lstm_dim)
         return hht, hidden
 
@@ -196,6 +196,6 @@ class Decoder(nn.Module):
 
         # linear
         self.linear.weight.data.uniform_(-0.1, 0.1)
-        if self.att_type == 'local_p' or self.att_type == 'local_m':
+        if self.att_type == 'local_p':
             self.position.weight.data.uniform_(-0.1, 0.1)
         return None
