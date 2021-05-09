@@ -215,7 +215,7 @@ def make_att_mask(max_sen_len, window_size):
 def softmax_masking(data, neg_inf=-1e+06):
     mask = (data == 0)
     mask = mask.to(torch.int64) * neg_inf
-    return mask*data
+    return mask + data
 
 
 def position_masking(hs, ht, window_size):
