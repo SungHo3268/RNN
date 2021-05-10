@@ -26,17 +26,23 @@ with open('datasets/preprocessed/vocab.de.pkl', 'rb') as fr:
 #     pickle.dump(f_train_en, fw)
 # with open('datasets/preprocessed/train/f_train.de.pkl', 'wb') as fw:
 #     pickle.dump(f_train_de, fw)
+#
+# ff_train_en, ff_train_de = dif_filter(f_train_en, f_train_de, dif=10)
+# with open('datasets/preprocessed/train/ff_train.en.pkl', 'wb') as fw:
+#     pickle.dump(ff_train_en, fw)
+# with open('datasets/preprocessed/train/ff_train.de.pkl', 'wb') as fw:
+#     pickle.dump(ff_train_de, fw)
 with open('datasets/preprocessed/train/f_train.en.pkl', 'rb') as fr:
-    f_train_en = pickle.load(fr)
+    ff_train_en = pickle.load(fr)
 with open('datasets/preprocessed/train/f_train.de.pkl', 'rb') as fr:
-    f_train_de = pickle.load(fr)
+    ff_train_de = pickle.load(fr)
 
 
-# source_input, source_len = make_source(f_train_en, en_to_id, max_sen_len=51, reverse=True, unk=True)
-# with open('datasets/preprocessed/train/source_reverse_unk.pkl', 'wb') as fw:
+# source_input, source_len = make_source(ff_train_en, en_to_id, max_sen_len=51, reverse=True, unk=False)
+# with open('datasets/preprocessed/train/source_reverse.pkl', 'wb') as fw:
 #     pickle.dump((source_input, source_len), fw)
-# target_input, target_output = make_target(f_train_de, de_to_id, max_sen_len=51, unk=True)
-# with open('datasets/preprocessed/train/target_unk.pkl', 'wb') as fw:
+# target_input, target_output = make_target(ff_train_de, de_to_id, max_sen_len=51, unk=False)
+# with open('datasets/preprocessed/train/target.pkl', 'wb') as fw:
 #     pickle.dump((target_input, target_output), fw)
 with open('datasets/preprocessed/train/source_reverse_unk.pkl', 'rb') as fr:
     source_input, source_len = pickle.load(fr)
@@ -77,13 +83,13 @@ with open('datasets/preprocessed/test/ff_test.de.pkl', 'rb') as fr:
 # _, test_target_output = make_target(f_test_de, de_to_id, max_sen_len=51, unk=False)
 # with open(f'datasets/preprocessed/test/test{trunc}_label.pkl', 'wb') as fw:
 #     pickle.dump(test_target_output, fw)
-trunc = 20
-test_source_input, test_source_len = make_source(ff_test_en, en_to_id, max_sen_len=51, reverse=True, unk=True)
-with open(f'datasets/preprocessed/test/test{trunc}_source_reverse_unk.pkl', 'wb') as fw:
-    pickle.dump((test_source_input, test_source_len), fw)
-_, test_target_output = make_target(ff_test_de, de_to_id, max_sen_len=51, unk=True)
-with open(f'datasets/preprocessed/test/test{trunc}_label_unk.pkl', 'wb') as fw:
-    pickle.dump(test_target_output, fw)
+# trunc = 20
+# test_source_input, test_source_len = make_source(ff_test_en, en_to_id, max_sen_len=51, reverse=True, unk=True)
+# with open(f'datasets/preprocessed/test/test{trunc}_source_reverse_unk.pkl', 'wb') as fw:
+#     pickle.dump((test_source_input, test_source_len), fw)
+# _, test_target_output = make_target(ff_test_de, de_to_id, max_sen_len=51, unk=True)
+# with open(f'datasets/preprocessed/test/test{trunc}_label_unk.pkl', 'wb') as fw:
+#     pickle.dump(test_target_output, fw)
 with open(f'datasets/preprocessed/test/test{trunc}_source.pkl', 'rb') as fr:
     test_source_input, test_source_len = pickle.load(fr)
 with open(f'datasets/preprocessed/test/test{trunc}_label_unk.pkl', 'rb') as fr:

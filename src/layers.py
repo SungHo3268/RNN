@@ -51,6 +51,9 @@ class Attention(nn.Module):
         self.align = align
         self.att_type = att_type
         self.input_feed = input_feed
+        self.window_size = window_size
+        self.gpu = gpu
+        self.cuda = cuda
 
         if align == 'general' or align == 'concat':
             self.att_score = nn.Linear(lstm_dim, lstm_dim, bias=False)
@@ -62,11 +65,6 @@ class Attention(nn.Module):
         else:
             print("It's the wrong alignment method.")
 
-        if att_type == 'local_m':
-            self.mask = make_att_mask(max_sen_len, window_size)
-            if gpu:
-                self.mask = self.mask.to(torch.device(f'cuda:{cuda}'))
-
     def forward(self, ht, hs):
         """
         :param ht: (mini_batch, seq_len, lstm_dim)
@@ -74,6 +72,12 @@ class Attention(nn.Module):
         :return: align_vec = (mini_batch, seq_len, max_seq_len(window))
         """
         mini_batch, max_sen_len, lstm_dim = hs.shape
+        seq_len = ht.shape[1]
+        mask = None
+        if self.att_type == 'local_m':
+            mask = make_att_mask(seq_len, max_sen_len, self.window_size)
+            if self.gpu:
+                mask = mask.to(torch.device(f'cuda:{self.cuda}'))
         score = 0
         if self.align == 'dot':
             score = torch.bmm(ht, hs.transpose(2, 1))       # score = (mini_batch, seq_len, max_sen_len(window))
@@ -93,7 +97,7 @@ class Attention(nn.Module):
             score = score.view(mini_batch, 1, max_sen_len)  # score = (mini_batch, seq_len, max_sen_len)
 
         if self.att_type == 'local_m':
-            score *= self.mask
+            score *= mask
             score = softmax_masking(score)
 
         align_vec = F.softmax(score, dim=2)                 # align_vec = (mini_batch, seq_len, max_sen_len)

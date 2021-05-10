@@ -10,15 +10,15 @@ from src.functions import *
 parser = argparse.ArgumentParser()
 parser.add_argument('--mode', type=str, default='dummy')
 parser.add_argument('--port', type=int, default=5678)
-parser.add_argument('--att_type', type=str, default='global',
+parser.add_argument('--att_type', type=str, default='local_m',
                     help='global  |  local_p  |  local_m')
-parser.add_argument('--align', type=str, default='location',
+parser.add_argument('--align', type=str, default='general',
                     help='location  |  dot  |  general  |  concat')
 parser.add_argument('--input_feed', type=_bool, default=False)
 parser.add_argument('--reverse', type=_bool, default=True)
 parser.add_argument('--unk', type=_bool, default=False)
 parser.add_argument('--mini_batch', type=int, default=32)
-parser.add_argument('--trunc', type=int, default=0)
+parser.add_argument('--trunc', type=int, default=10)
 parser.add_argument('--random_seed', type=int, default=515)
 parser.add_argument('--gpu', type=_bool, default=True)
 parser.add_argument('--cuda', type=int, default=0)

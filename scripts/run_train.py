@@ -25,7 +25,7 @@ parser.add_argument('--mini_batch', type=int, default=64)
 parser.add_argument('--max_epoch', type=int, default=12)
 parser.add_argument('--fine_tune_epoch', type=int, default=8)
 parser.add_argument('--eval_interval', type=int, default=50)
-parser.add_argument('--trunc', type=int, default=0)
+parser.add_argument('--trunc', type=int, default=10)
 parser.add_argument('--random_seed', type=int, default=515)
 parser.add_argument('--gpu', type=_bool, default=True)
 parser.add_argument('--cuda', type=int, default=0)
@@ -141,7 +141,6 @@ tgt_output = torch.from_numpy(tgt_output)
 sen_num = 0             # count the number of real train sentence pair.
 total_loss = 0
 count = 0
-
 for epoch in range(args.max_epoch):
     # shuffle the training data
     print("Shuffling the data..")
