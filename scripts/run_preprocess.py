@@ -76,14 +76,14 @@ with open('datasets/preprocessed/test/ff_test.en.pkl', 'rb') as fr:
 with open('datasets/preprocessed/test/ff_test.de.pkl', 'rb') as fr:
     ff_test_de = pickle.load(fr)
 
-# trunc = 0
+trunc = 0
 # test_source_input, test_source_len = make_source(f_test_en, en_to_id, max_sen_len=51, reverse=True, unk=False)
 # with open(f'datasets/preprocessed/test/test{trunc}_source_reverse.pkl', 'wb') as fw:
 #     pickle.dump((test_source_input, test_source_len), fw)
 # _, test_target_output = make_target(f_test_de, de_to_id, max_sen_len=51, unk=False)
 # with open(f'datasets/preprocessed/test/test{trunc}_label.pkl', 'wb') as fw:
 #     pickle.dump(test_target_output, fw)
-# trunc = 20
+# trunc = 10
 # test_source_input, test_source_len = make_source(ff_test_en, en_to_id, max_sen_len=51, reverse=True, unk=True)
 # with open(f'datasets/preprocessed/test/test{trunc}_source_reverse_unk.pkl', 'wb') as fw:
 #     pickle.dump((test_source_input, test_source_len), fw)

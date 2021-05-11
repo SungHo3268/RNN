@@ -16,17 +16,17 @@
           </mappings>
         </serverdata>
       </paths>
+      <paths name="sv4">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/user13/workspace/freshman/RNN" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
       <paths name="sv5">
         <serverdata>
           <mappings>
             <mapping deploy="/data/user13/workspace/freshman/RNN" local="$PROJECT_DIR$" web="/" />
-          </mappings>
-        </serverdata>
-      </paths>
-      <paths name="sv6">
-        <serverdata>
-          <mappings>
-            <mapping local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>
