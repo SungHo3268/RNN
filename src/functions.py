@@ -329,9 +329,9 @@ def test_eval(model, log_dir, mini_batch, lstm_layer, lstm_dim, max_sen_len,
     test_dir = os.path.join(log_dir, 'test')
     if not os.path.exists(test_dir):
         os.mkdir(test_dir)
-    with open(os.path.join(test_dir, f'output_{epoch}.txt'), 'w', encoding='utf8') as fw:
+    with open(os.path.join(test_dir, f'output_{epoch+1}.txt'), 'w', encoding='utf8') as fw:
         fw.writelines(test_pred_output)
-    with open(os.path.join(test_dir, f'label_{epoch}.txt'), 'w', encoding='utf8') as fw:
+    with open(os.path.join(test_dir, f'label_{epoch+1}.txt'), 'w', encoding='utf8') as fw:
         fw.writelines(test_label)
     print("Succeed to save the prediction and label text file!")
     print('\n')
