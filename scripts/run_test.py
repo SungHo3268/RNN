@@ -17,7 +17,7 @@ parser.add_argument('--align', type=str, default='general',
 parser.add_argument('--input_feed', type=_bool, default=False)
 parser.add_argument('--reverse', type=_bool, default=True)
 parser.add_argument('--unk', type=_bool, default=False)
-parser.add_argument('--mini_batch', type=int, default=32)
+parser.add_argument('--mini_batch', type=int, default=64)
 parser.add_argument('--trunc', type=int, default=10)
 parser.add_argument('--random_seed', type=int, default=515)
 parser.add_argument('--gpu', type=_bool, default=True)
@@ -77,14 +77,14 @@ else:
             test_source_input, test_source_len = pickle.load(fr)
     with open(f'datasets/preprocessed/test/test{args.trunc}_label.pkl', 'rb') as fr:
         test_target_output = pickle.load(fr)
-print("Complete. \n")
+print("Complete.")
 
 
 print("Split the data into mini_batch..")
 test_src_input = make_batch(test_source_input, args.mini_batch)
 test_src_len = make_batch(test_source_len, args.mini_batch)
 test_tgt_output = make_batch(test_target_output, args.mini_batch)
-print("Complete.\n")
+print("Complete.")
 
 test_src_input = torch.from_numpy(test_src_input)
 test_src_len = torch.from_numpy(test_src_len)

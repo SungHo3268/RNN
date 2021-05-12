@@ -99,14 +99,14 @@ else:
             src_input, src_len = pickle.load(fr)
     with open('datasets/preprocessed/train/target.pkl', 'rb') as fr:
         tgt_input, tgt_output = pickle.load(fr)
-print("Complete. \n")
+print("Complete.")
 
 print("Split the data into mini_batch..")
 src_input = make_batch(src_input, args.mini_batch)
 src_len = make_batch(src_len, args.mini_batch)
 tgt_input = make_batch(tgt_input, args.mini_batch)
 tgt_output = make_batch(tgt_output, args.mini_batch)
-print("Complete.\n")
+print("Complete.")
 
 
 ############################ InitNet ############################

@@ -258,13 +258,13 @@ def test_eval(model, log_dir, mini_batch, lstm_layer, lstm_dim, max_sen_len,
                 test_source_input, test_source_len = pickle.load(fr)
         with open(f'datasets/preprocessed/test/test{trunc}_label.pkl', 'rb') as fr:
             test_target_output = pickle.load(fr)
-    print("Complete. \n")
+    print("Complete.")
 
     print("Split the data into mini_batch..")
     test_src_input = make_batch(test_source_input, mini_batch)
     test_src_len = make_batch(test_source_len, mini_batch)
     test_tgt_output = make_batch(test_target_output, mini_batch)
-    print("Complete.\n")
+    print("Complete.")
 
     test_src_input = torch.from_numpy(test_src_input)
     test_src_len = torch.from_numpy(test_src_len)
@@ -334,3 +334,4 @@ def test_eval(model, log_dir, mini_batch, lstm_layer, lstm_dim, max_sen_len,
     with open(os.path.join(test_dir, f'label_{epoch}.txt'), 'w', encoding='utf8') as fw:
         fw.writelines(test_label)
     print("Succeed to save the prediction and label text file!")
+    print('\n')
