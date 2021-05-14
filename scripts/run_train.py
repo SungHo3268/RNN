@@ -142,6 +142,8 @@ sen_num = 0             # count the number of real train sentence pair.
 total_loss = 0
 count = 0
 for epoch in range(args.max_epoch):
+    model.train()
+
     # shuffle the training data
     print("Shuffling the data..")
     per = torch.randperm(len(src_input))
@@ -215,6 +217,7 @@ for epoch in range(args.max_epoch):
     print("Complete..!")
     print('\n')
 
+    model.eval()
     # evaluate test set and save the text file.
     test_eval(model, log_dir, args.mini_batch, lstm_layer, lstm_dim, max_sen_len,
               args.gpu, args.cuda, args.reverse, args.unk, args.trunc, epoch, id_to_de)
