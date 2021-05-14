@@ -231,6 +231,8 @@ def position_masking(hs, ht, window_size):
 
 def test_eval(model, log_dir, mini_batch, lstm_layer, lstm_dim, max_sen_len,
               gpu, cuda, reverse, unk, trunc, epoch, id_to_de):
+    mini_batch = int(mini_batch/4)
+
     # check dir, make dir
     test_dir = os.path.join(log_dir, 'test')
     if not os.path.exists(test_dir):
