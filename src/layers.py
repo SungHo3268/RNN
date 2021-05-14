@@ -78,6 +78,7 @@ class Attention(nn.Module):
             mask = make_att_mask(seq_len, max_sen_len, self.window_size)
             if self.gpu:
                 mask = mask.to(torch.device(f'cuda:{self.cuda}'))
+
         score = 0
         if self.align == 'dot':
             score = torch.bmm(ht, hs.transpose(2, 1))       # score = (mini_batch, seq_len, max_sen_len(window))
