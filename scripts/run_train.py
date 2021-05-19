@@ -3,6 +3,7 @@ from distutils.util import strtobool as _bool
 import json
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
+from torch.cuda.amp import autocast
 import sys
 import os
 sys.path.append(os.getcwd())
@@ -14,9 +15,9 @@ from src.functions import *
 parser = argparse.ArgumentParser()
 parser.add_argument('--mode', type=str, default='dummy')
 parser.add_argument('--port', type=int, default=5678)
-parser.add_argument('--att_type', type=str, default='local_m',
+parser.add_argument('--att_type', type=str, default='global',
                     help='global  |  local_p  |  local_m')
-parser.add_argument('--align', type=str, default='general',
+parser.add_argument('--align', type=str, default='location',
                     help='location  |  dot  |  general  |  concat')
 parser.add_argument('--input_feed', type=_bool, default=False)
 parser.add_argument('--reverse', type=_bool, default=True)
@@ -170,30 +171,30 @@ for epoch in range(args.max_epoch):
 
         model.train()
         sen_num += 1
+        with autocast():
+            # init hidden state
+            h_0 = torch.zeros(lstm_layer, args.mini_batch, lstm_dim)  # (4, 128, 1000)
+            c_0 = torch.zeros(lstm_layer, args.mini_batch, lstm_dim)
+            hidden = (h_0, c_0)
+            hidden = [state.detach() for state in hidden]
+            if args.gpu:
+                batch_src_input = batch_src_input.to(device)
+                batch_src_len = batch_src_len.to(device)
+                batch_tgt_input = batch_tgt_input.to(device)
+                batch_tgt_output = batch_tgt_output.to(device)
+                hidden = [state.to(device) for state in hidden]
 
-        # init hidden state
-        h_0 = torch.zeros(lstm_layer, args.mini_batch, lstm_dim)  # (4, 128, 1000)
-        c_0 = torch.zeros(lstm_layer, args.mini_batch, lstm_dim)
-        hidden = (h_0, c_0)
-        hidden = [state.detach() for state in hidden]
-        if args.gpu:
-            batch_src_input = batch_src_input.to(device)
-            batch_src_len = batch_src_len.to(device)
-            batch_tgt_input = batch_tgt_input.to(device)
-            batch_tgt_output = batch_tgt_output.to(device)
-            hidden = [state.to(device) for state in hidden]
+            # first decoder (past) output
+            hht = torch.zeros(args.mini_batch, max_sen_len, lstm_dim)         # first time-step prev decoder context
+            if args.gpu:
+                hht = hht.to(device)
 
-        # first decoder (past) output
-        hht = torch.zeros(args.mini_batch, max_sen_len, lstm_dim)         # first time-step prev decoder context
-        if args.gpu:
-            hht = hht.to(device)
-
-        # train
-        optimizer.zero_grad()
-        out = model(batch_src_input, batch_tgt_input, hidden, hht, batch_src_len)
-        if args.gpu:
-            out = out.to(device)
-        loss = criterion(out.view(-1, tgt_vocab_size), batch_tgt_output.view(-1))
+            # train
+            optimizer.zero_grad()
+            out = model(batch_src_input, batch_tgt_input, hidden, hht, batch_src_len)
+            if args.gpu:
+                out = out.to(device)
+            loss = criterion(out.view(-1, tgt_vocab_size), batch_tgt_output.view(-1))
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=max_norm, norm_type=2)
         optimizer.step()
