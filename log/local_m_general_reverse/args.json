@@ -1,0 +1,1 @@
+{"mode": "dummy", "port": 5678, "att_type": "local_m", "align": "general", "input_feed": false, "reverse": 1, "unk": 0, "mini_batch": 128, "max_epoch": 12, "fine_tune_epoch": 8, "eval_interval": 50, "trunc": 10, "random_seed": 515, "gpu": 1, "cuda": 1}
